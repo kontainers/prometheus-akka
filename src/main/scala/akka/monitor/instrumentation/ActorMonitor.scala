@@ -173,7 +173,7 @@ object ActorMonitors {
 
     def captureEnvelopeContext(): EnvelopeContext = {
       trackingGroups.foreach { group =>
-        ActorGroupMetrics.mailboxSize.labels(group).inc()
+        ActorGroupMetrics.mailboxSize.increment()
         ActorGroupMetrics.messages.labels(group).inc()
       }
       EnvelopeContext()

@@ -16,7 +16,7 @@
  */
 package com.workday.prometheus.akka
 
-import io.prometheus.client.{Counter, Gauge}
+import io.micrometer.core.instrument.Tag
 
 object ActorSystemMetrics {
   private[akka] val ActorCountMetricName = "akka_system_actor_count"
@@ -26,4 +26,5 @@ object ActorSystemMetrics {
   val actorCount = Gauge.build().name(ActorCountMetricName).help("Actor System Actor count").labelNames("actorSystem").register()
   val deadLetterCount = Counter.build().name(DeadLetterCountMetricName).help("Actor System Dead Letter count").labelNames("actorSystem").register()
   val unhandledMessageCount = Counter.build().name(UnhandledMessageCountMetricName).help("Actor System Unhandled Message count").labelNames("actorSystem").register()
+  private def tagSeq(system: String) = Seq(Tag.of("actorSystem", system))
 }

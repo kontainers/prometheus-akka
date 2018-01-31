@@ -1,6 +1,6 @@
 organization := "com.workday"
 
-name := "prometheus-akka"
+name := "micrometer-akka"
 
 scalaVersion := "2.11.12"
 
@@ -13,18 +13,16 @@ def sysPropOrDefault(propName: String, default: String): String = Option(System.
 
 val akkaVersion = sysPropOrDefault("akka.version", "2.4.20")
 val aspectjweaverVersion = "1.8.13"
-val prometheusVersion = "0.2.0"
+val micrometerVersion = "0.12.0.RELEASE"
 
 checksums in update := Nil
-
-resolvers += Resolver.bintrayRepo("kamon-io", "releases")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.25",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-  "io.prometheus" % "simpleclient" % prometheusVersion,
-  "io.prometheus" % "simpleclient_common" % prometheusVersion,
+  "io.micrometer" % "micrometer-core" % micrometerVersion,
+  "io.micrometer" % "micrometer-registry-prometheus" % micrometerVersion % "test",
   "com.typesafe" % "config" % "1.3.1",
   "org.aspectj" % "aspectjweaver" % aspectjweaverVersion,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",

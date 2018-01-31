@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 import io.prometheus.client._
 
 object ActorMetrics {
-  private val map = new java.util.concurrent.ConcurrentHashMap[Entity, ActorMetrics]().asScala
+  private val map: concurrent.Map[Entity, ActorMetrics] = new java.util.concurrent.ConcurrentHashMap[Entity, ActorMetrics]().asScala
   def metricsFor(e: Entity) = map.getOrElseUpdate(e, new ActorMetrics(e))
   def hasMetricsFor(e: Entity) = map.contains(e)
 }
