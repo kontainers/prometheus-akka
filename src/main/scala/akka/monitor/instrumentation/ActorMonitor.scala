@@ -16,6 +16,8 @@
  */
 package akka.monitor.instrumentation
 
+import java.util.concurrent.TimeUnit
+
 import org.aspectj.lang.ProceedingJoinPoint
 import org.slf4j.LoggerFactory
 
@@ -94,13 +96,13 @@ object ActorMonitors {
     }
 
     def processMessage(pjp: ProceedingJoinPoint, envelopeContext: EnvelopeContext): AnyRef = {
-      val timeInMailbox: Double = (System.nanoTime() - envelopeContext.nanoTime).toDouble / Collector.NANOSECONDS_PER_SECOND
+      val timeInMailbox: Long = System.nanoTime() - envelopeContext.nanoTime
 
       val actorProcessingTimers = actorMetrics.map { am =>
         am.processingTime.startTimer()
       }
       val actorGroupProcessingTimers = trackingGroups.map { group =>
-        ActorGroupMetrics.processingTime.labels(group).startTimer()
+        ActorGroupMetrics.processingTime(group).startTimer()
       }
 
       try {
@@ -110,7 +112,7 @@ object ActorMonitors {
         actorGroupProcessingTimers.foreach { _.close() }
 
         actorMetrics.foreach { am =>
-          am.timeInMailbox.inc(timeInMailbox)
+          am.timeInMailbox.inc(timeInMailbox / Collector.NANOSECONDS_PER_SECOND)
           am.mailboxSize.dec()
         }
         recordGroupMetrics(timeInMailbox)
@@ -139,11 +141,11 @@ object ActorMonitors {
     }
 
     def processMessage(pjp: ProceedingJoinPoint, envelopeContext: EnvelopeContext): AnyRef = {
-      val timeInMailbox: Double = (System.nanoTime() - envelopeContext.nanoTime).toDouble / Collector.NANOSECONDS_PER_SECOND
+      val timeInMailbox: Long = System.nanoTime() - envelopeContext.nanoTime
 
       val processingTimer = routerMetrics.processingTime.startTimer()
       val actorGroupProcessingTimers = trackingGroups.map { group =>
-        ActorGroupMetrics.processingTime.labels(group).startTimer()
+        ActorGroupMetrics.processingTime(group).startTimer()
       }
 
       try {
@@ -151,7 +153,7 @@ object ActorMonitors {
       } finally {
         processingTimer.close()
         actorGroupProcessingTimers.foreach { _.close() }
-        routerMetrics.timeInMailbox.inc(timeInMailbox)
+        routerMetrics.timeInMailbox.inc(timeInMailbox / Collector.NANOSECONDS_PER_SECOND)
         recordGroupMetrics(timeInMailbox)
       }
     }
@@ -165,38 +167,38 @@ object ActorMonitors {
   abstract class GroupMetricsTrackingActor(entity: Entity, actorSystemName: String,
       trackingGroups: List[String], actorCellCreation: Boolean) extends ActorMonitor {
     if (actorCellCreation) {
-      ActorSystemMetrics.actorCount.labels(actorSystemName).inc()
+      ActorSystemMetrics.actorCount(actorSystemName).increment()
       trackingGroups.foreach { group =>
-        ActorGroupMetrics.actorCount.labels(group).inc()
+        ActorGroupMetrics.actorCount(group).increment()
       }
     }
 
     def captureEnvelopeContext(): EnvelopeContext = {
       trackingGroups.foreach { group =>
-        ActorGroupMetrics.mailboxSize.increment()
-        ActorGroupMetrics.messages.labels(group).inc()
+        ActorGroupMetrics.mailboxSize(group).increment()
+        ActorGroupMetrics.messages(group).increment()
       }
       EnvelopeContext()
     }
 
-    protected def recordGroupMetrics(timeInMailbox: Double): Unit = {
+    protected def recordGroupMetrics(timeInMailbox: Long): Unit = {
       trackingGroups.foreach { group =>
-        ActorGroupMetrics.timeInMailbox.labels(group).inc(timeInMailbox)
-        ActorGroupMetrics.mailboxSize.labels(group).dec()
+        ActorGroupMetrics.timeInMailbox(group).timer.record(timeInMailbox, TimeUnit.NANOSECONDS)
+        ActorGroupMetrics.mailboxSize(group).increment(-1.0)
       }
     }
 
     def processFailure(failure: Throwable): Unit = {
       trackingGroups.foreach { group =>
-        ActorGroupMetrics.errors.labels(group).inc()
+        ActorGroupMetrics.errors(group).increment()
       }
     }
 
     def cleanup(): Unit = {
       if (actorCellCreation) {
-        ActorSystemMetrics.actorCount.labels(actorSystemName).dec()
+        ActorSystemMetrics.actorCount(actorSystemName).increment(-1.0)
         trackingGroups.foreach { group =>
-          ActorGroupMetrics.actorCount.labels(group).dec()
+          ActorGroupMetrics.actorCount(group).increment(-1.0)
         }
       }
     }

@@ -16,9 +16,11 @@
  */
 package com.workday.prometheus.akka
 
-import io.micrometer.core.instrument.Tag
+import io.micrometer.core.instrument.{ImmutableTag, Tag}
 
 object ActorGroupMetrics {
+
+  val GroupName = "groupName"
 
   private[akka] val MailboxMetricName = "akka_actor_group_mailboxes_size"
   private[akka] val ProcessingTimeMetricName = "akka_actor_group_processing_time"
@@ -35,5 +37,5 @@ object ActorGroupMetrics {
   def messages(group: String) = counter(MessageCountMetricName, tagSeq(group))
   def actorCount(group: String) = counter(ActorCountMetricName, tagSeq(group))
   def errors(group: String) = counter(ErrorCountMetricName, tagSeq(group))
-  private def tagSeq(group: String) = Seq(Tag.of("groupName", group))
+  private def tagSeq(group: String): Iterable[Tag] = Seq(new ImmutableTag(GroupName, group))
 }

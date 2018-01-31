@@ -25,6 +25,7 @@ import org.scalatest.concurrent.Eventually
 import akka.actor._
 import akka.routing.RoundRobinPool
 import akka.testkit.TestProbe
+import io.micrometer.core.instrument.{ImmutableTag, Tag}
 import io.prometheus.client.Collector
 
 class ActorGroupMetricsSpec extends TestKitBaseSpec("ActorGroupMetricsSpec") with BeforeAndAfterEach with Eventually {
@@ -95,26 +96,13 @@ class ActorGroupMetricsSpec extends TestKitBaseSpec("ActorGroupMetricsSpec") wit
   }
 
   def findGroupRecorder(groupName: String): Map[String, Double] = {
-    val metrics: List[Collector.MetricFamilySamples] =
-      ActorGroupMetrics.errors.collect().asScala.toList ++
-      ActorGroupMetrics.actorCount.collect().asScala.toList ++
-      ActorGroupMetrics.mailboxSize.collect().asScala.toList ++
-      ActorGroupMetrics.messages.collect().asScala.toList ++
-      ActorGroupMetrics.processingTime.collect().asScala.toList ++
-      ActorGroupMetrics.timeInMailbox.collect().asScala.toList
-    val values = for(samples <- metrics;
-      sample <- samples.samples.asScala if sample.labelValues.contains(groupName))
-      yield (sample.name, sample.value)
-    values.toMap
+    val metrics = AkkaMetricRegistry.metricsForTags(Seq(new ImmutableTag(ActorGroupMetrics.GroupName, groupName)))
+    println(">>>>>> " + metrics)
+    Map.empty
   }
 
   def clearGroupMetrics: Unit = {
-    ActorGroupMetrics.errors.clear()
-    ActorGroupMetrics.actorCount.clear()
-    ActorGroupMetrics.mailboxSize.clear()
-    ActorGroupMetrics.messages.clear()
-    ActorGroupMetrics.processingTime.clear()
-    ActorGroupMetrics.timeInMailbox.clear()
+    AkkaMetricRegistry.clear()
   }
 
   def createTestActor(name: String): ActorRef = {

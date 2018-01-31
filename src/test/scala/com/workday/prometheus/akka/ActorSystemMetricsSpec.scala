@@ -25,6 +25,7 @@ import org.scalatest.concurrent.Eventually
 import com.workday.prometheus.akka.ActorSystemMetrics._
 
 import akka.actor._
+import io.micrometer.core.instrument.{ImmutableTag, Tag}
 import io.prometheus.client.Collector
 
 class ActorSystemMetricsSpec extends TestKitBaseSpec("ActorSystemMetricsSpec") with BeforeAndAfterEach with Eventually {
@@ -68,17 +69,12 @@ class ActorSystemMetricsSpec extends TestKitBaseSpec("ActorSystemMetricsSpec") w
   }
 
   def findSystemMetricsRecorder(name: String): Map[String, Double] = {
-    val metrics: List[Collector.MetricFamilySamples] =
-      ActorSystemMetrics.actorCount.collect().asScala.toList ++
-        ActorSystemMetrics.deadLetterCount.collect().asScala.toList ++
-        ActorSystemMetrics.unhandledMessageCount.collect().asScala.toList
-    val values = for(samples <- metrics;
-      sample <- samples.samples.asScala if sample.labelValues.contains(name))
-      yield (sample.name, sample.value)
-    values.toMap
+    val metrics = AkkaMetricRegistry.metricsForTags(Seq(new ImmutableTag(ActorSystemMetrics.ActorSystem, name)))
+    println(">>>>>> " + metrics)
+    Map.empty
   }
 
   def clearSystemMetrics: Unit = {
-    ActorSystemMetrics.actorCount.clear()
+    AkkaMetricRegistry.clear()
   }
 }

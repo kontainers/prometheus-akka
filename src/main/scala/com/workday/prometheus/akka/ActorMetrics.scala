@@ -16,12 +16,12 @@
  */
 package com.workday.prometheus.akka
 
-import scala.collection.JavaConverters._
+import scala.collection.concurrent.TrieMap
 
 import io.prometheus.client._
 
 object ActorMetrics {
-  private val map: concurrent.Map[Entity, ActorMetrics] = new java.util.concurrent.ConcurrentHashMap[Entity, ActorMetrics]().asScala
+  private val map = TrieMap[Entity, ActorMetrics]()
   def metricsFor(e: Entity) = map.getOrElseUpdate(e, new ActorMetrics(e))
   def hasMetricsFor(e: Entity) = map.contains(e)
 }

@@ -24,9 +24,25 @@ object AkkaMetricRegistry {
     counterMap.getOrElseUpdate(MeterKey(name, tags), getRegistry.counter(name, javaTags))
   }
 
-  def timer(name: String, tags: Iterable[Tag]): Timer = {
+  def timer(name: String, tags: Iterable[Tag]): ScalaTimer = {
     def javaTags = tags.asJava
-    timerMap.getOrElseUpdate(MeterKey(name, tags), getRegistry.timer(name, javaTags))
+    ScalaTimer(timerMap.getOrElseUpdate(MeterKey(name, tags), getRegistry.timer(name, javaTags)))
+  }
+
+  private[akka] def clear(): Unit = {
+    timerRegistryMap.clear()
+    counterRegistryMap.clear()
+  }
+
+  private[akka] def metricsForTags(tags: Seq[Tag]): Iterable[(String, Option[Measurement])] = {
+    getRegistry.getMeters.asScala.flatMap { meter =>
+      val id = meter.getId
+      if (id.getTags.asScala == tags) {
+        Some((id.getName, meter.measure().asScala.headOption))
+      } else {
+        None
+      }
+    }
   }
 
   private def counterMap: TrieMap[MeterKey, Counter] = {
