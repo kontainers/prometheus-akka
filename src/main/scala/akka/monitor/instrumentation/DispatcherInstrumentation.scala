@@ -1,6 +1,6 @@
 /*
  * =========================================================================================
- * Copyright © 2017 Workday, Inc.
+ * Copyright © 2017,2018 Workday, Inc.
  * Copyright © 2013-2017 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -143,16 +143,7 @@ class DispatcherInstrumentation {
   def lazyExecutorShutdown(lazyExecutor: LookupDataAware): Unit = {}
 
   @After("lazyExecutorShutdown(lazyExecutor)")
-  def afterLazyExecutorShutdown(lazyExecutor: LookupDataAware): Unit = {
-    import lazyExecutor.lookupData
-
-    if (lookupData.actorSystem != null) {
-      lazyExecutor.asInstanceOf[ExecutorServiceDelegate].executor match {
-        case tpe: ThreadPoolExecutor ⇒ ThreadPoolMetrics.remove(lazyExecutor.lookupData.dispatcherName)
-        case other => ForkJoinPoolMetrics.remove(lazyExecutor.lookupData.dispatcherName)
-      }
-    }
-  }
+  def afterLazyExecutorShutdown(lazyExecutor: LookupDataAware): Unit = {}
 
   @Pointcut("execution(* akka.routing.BalancingPool.newRoutee(..)) && args(props, context)")
   def createNewRouteeOnBalancingPool(props: Props, context: ActorContext): Unit = {}

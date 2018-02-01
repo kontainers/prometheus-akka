@@ -1,6 +1,6 @@
 /*
  * =========================================================================================
- * Copyright © 2017 Workday, Inc.
+ * Copyright © 2017,2018 Workday, Inc.
  * Copyright © 2013-2017 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -18,14 +18,19 @@ package com.workday.prometheus.akka
 
 class ForkJoinPoolMetricsSpec extends BaseSpec {
 
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    AkkaMetricRegistry.clear()
+  }
+
   "ForkJoinPoolMetrics" should {
     "support java forkjoinpool" in {
       val name = "ForkJoinPoolMetricsSpec-java-pool"
       val pool = new java.util.concurrent.ForkJoinPool
       try {
         ForkJoinPoolMetrics.add(name, pool.asInstanceOf[ForkJoinPoolLike])
+        DispatcherMetricsSpec.findDispatcherRecorder(name) should not be(empty)
       } finally {
-        ForkJoinPoolMetrics.remove(name)
         pool.shutdownNow()
       }
     }
@@ -35,8 +40,8 @@ class ForkJoinPoolMetricsSpec extends BaseSpec {
       val pool = new scala.concurrent.forkjoin.ForkJoinPool
       try {
         ForkJoinPoolMetrics.add(name, pool.asInstanceOf[ForkJoinPoolLike])
+        DispatcherMetricsSpec.findDispatcherRecorder(name) should not be(empty)
       } finally {
-        ForkJoinPoolMetrics.remove(name)
         pool.shutdownNow()
       }
     }

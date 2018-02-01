@@ -16,74 +16,32 @@
  */
 package com.workday.prometheus.akka
 
-import java.util.Collections
+import scala.collection.JavaConverters._
 
-import scala.collection.JavaConverters.seqAsJavaListConverter
-import scala.collection.concurrent.TrieMap
+import com.workday.prometheus.akka.impl.DoubleFunction
 
-import io.prometheus.client.Collector
-import io.prometheus.client.Collector.MetricFamilySamples
-import io.prometheus.client.GaugeMetricFamily
+import io.micrometer.core.instrument.{ImmutableTag, Tag}
 
-object ForkJoinPoolMetrics extends Collector {
-  val map = TrieMap[String, Option[ForkJoinPoolLike]]()
-  this.register()
-  override def collect(): java.util.List[MetricFamilySamples] = {
-    val dispatcherNameList = List("dispatcherName").asJava
-    val parallelismGauge = new GaugeMetricFamily("akka_dispatcher_forkjoinpool_parellelism",
-      "Akka ForkJoinPool Dispatcher Parellelism", dispatcherNameList)
-    val poolSizeGauge = new GaugeMetricFamily("akka_dispatcher_forkjoinpool_pool_size",
-      "Akka ForkJoinPool Dispatcher Pool Size", dispatcherNameList)
-    val activeThreadCountGauge = new GaugeMetricFamily("akka_dispatcher_forkjoinpool_active_thread_count",
-      "Akka ForkJoinPool Dispatcher Active Thread Count", dispatcherNameList)
-    val runningThreadCountGauge = new GaugeMetricFamily("akka_dispatcher_forkjoinpool_running_thread_count",
-      "Akka ForkJoinPool Dispatcher Running Thread Count", dispatcherNameList)
-    val queuedTaskCountGauge = new GaugeMetricFamily("akka_dispatcher_forkjoinpool_queued_task_count",
-      "Akka ForkJoinPool Dispatcher Queued Task Count", dispatcherNameList)
-    val queuedSubmissionCountGauge = new GaugeMetricFamily("akka_dispatcher_forkjoinpool_queued_submission_count",
-      "Akka ForkJoinPool Dispatcher Queued Submission Count", dispatcherNameList)
-    val stealCountGauge = new GaugeMetricFamily("akka_dispatcher_forkjoinpool_steal_count",
-      "Akka ForkJoinPool Dispatcher Steal Count", dispatcherNameList)
-    map.foreach { case (dispatcherName, fjpOption) =>
-      val dispatcherNameList = List(dispatcherName).asJava
-      fjpOption match {
-        case Some(fjp) => {
-          parallelismGauge.addMetric(dispatcherNameList, fjp.getParallelism)
-          poolSizeGauge.addMetric(dispatcherNameList, fjp.getPoolSize)
-          activeThreadCountGauge.addMetric(dispatcherNameList, fjp.getActiveThreadCount)
-          runningThreadCountGauge.addMetric(dispatcherNameList, fjp.getRunningThreadCount)
-          queuedSubmissionCountGauge.addMetric(dispatcherNameList, fjp.getQueuedSubmissionCount)
-          queuedTaskCountGauge.addMetric(dispatcherNameList, fjp.getQueuedTaskCount)
-          stealCountGauge.addMetric(dispatcherNameList, fjp.getStealCount)
-        }
-        case None => {
-          parallelismGauge.addMetric(dispatcherNameList, 0)
-          poolSizeGauge.addMetric(dispatcherNameList, 0)
-          activeThreadCountGauge.addMetric(dispatcherNameList, 0)
-          runningThreadCountGauge.addMetric(dispatcherNameList, 0)
-          queuedSubmissionCountGauge.addMetric(dispatcherNameList, 0)
-          queuedTaskCountGauge.addMetric(dispatcherNameList, 0)
-          stealCountGauge.addMetric(dispatcherNameList, 0)
-        }
-      }
-
-    }
-    val jul = new java.util.ArrayList[MetricFamilySamples]
-    jul.add(parallelismGauge)
-    jul.add(poolSizeGauge)
-    jul.add(activeThreadCountGauge)
-    jul.add(runningThreadCountGauge)
-    jul.add(queuedSubmissionCountGauge)
-    jul.add(queuedTaskCountGauge)
-    jul.add(stealCountGauge)
-    Collections.unmodifiableList(jul)
-  }
+object ForkJoinPoolMetrics {
+  val DispatcherName = "dispatcherName"
 
   def add(dispatcherName: String, fjp: ForkJoinPoolLike): Unit = {
-    map.put(dispatcherName, Some(fjp))
-  }
-
-  def remove(dispatcherName: String): Unit = {
-    map.put(dispatcherName, None)
+    import AkkaMetricRegistry._
+    val tags: Iterable[Tag] = Seq(new ImmutableTag(DispatcherName, dispatcherName))
+    val jtags = tags.asJava
+    val parellelismFn = new DoubleFunction[ForkJoinPoolLike](_.getParallelism)
+    val poolSizeFn = new DoubleFunction[ForkJoinPoolLike](_.getParallelism)
+    val activeThreadCountFn = new DoubleFunction[ForkJoinPoolLike](_.getActiveThreadCount)
+    val runningThreadCountFn = new DoubleFunction[ForkJoinPoolLike](_.getRunningThreadCount)
+    val queuedSubmissionCountFn = new DoubleFunction[ForkJoinPoolLike](_.getQueuedSubmissionCount)
+    val queuedTaskCountFn = new DoubleFunction[ForkJoinPoolLike](_.getQueuedTaskCount)
+    val stealCountFn = new DoubleFunction[ForkJoinPoolLike](_.getStealCount)
+    getRegistry.gauge("akka_dispatcher_forkjoinpool_parellelism", jtags, fjp, parellelismFn)
+    getRegistry.gauge("akka_dispatcher_forkjoinpool_pool_size", jtags, fjp, poolSizeFn)
+    getRegistry.gauge("akka_dispatcher_forkjoinpool_active_thread_count", jtags, fjp, activeThreadCountFn)
+    getRegistry.gauge("akka_dispatcher_forkjoinpool_running_thread_count", jtags, fjp, runningThreadCountFn)
+    getRegistry.gauge("akka_dispatcher_forkjoinpool_queued_task_count", jtags, fjp, queuedSubmissionCountFn)
+    getRegistry.gauge("akka_dispatcher_forkjoinpool_queued_submission_count", jtags, fjp, queuedTaskCountFn)
+    getRegistry.gauge("akka_dispatcher_forkjoinpool_steal_count", jtags, fjp, stealCountFn)
   }
 }

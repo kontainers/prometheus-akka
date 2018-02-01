@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "io.micrometer" % "micrometer-core" % micrometerVersion,
-  "io.micrometer" % "micrometer-registry-prometheus" % micrometerVersion,
+  "io.micrometer" % "micrometer-registry-prometheus" % micrometerVersion % "test",
   "com.typesafe" % "config" % "1.3.1",
   "org.aspectj" % "aspectjweaver" % aspectjweaverVersion,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",

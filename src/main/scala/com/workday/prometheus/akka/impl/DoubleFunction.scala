@@ -14,17 +14,10 @@
  * and limitations under the License.
  * =========================================================================================
  */
-package com.workday.prometheus.akka
+package com.workday.prometheus.akka.impl
 
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import akka.actor.ActorSystem
-import akka.testkit.TestKit
+import java.util.function.ToDoubleFunction
 
-trait BaseSpec extends WordSpecLike with Matchers with BeforeAndAfterAll
-
-abstract class TestKitBaseSpec(actorSystemName: String) extends TestKit(ActorSystem(actorSystemName)) with BaseSpec {
-  override def afterAll(): Unit = {
-    super.afterAll()
-    TestKit.shutdownActorSystem(system)
-  }
+private[akka] class DoubleFunction[T](fun: T => Double) extends ToDoubleFunction[T] {
+  override def applyAsDouble(t: T): Double = fun(t)
 }

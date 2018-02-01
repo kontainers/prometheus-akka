@@ -1,6 +1,6 @@
 /*
  * =========================================================================================
- * Copyright © 2017 Workday, Inc.
+ * Copyright © 2017,2018 Workday, Inc.
  * Copyright © 2013-2017 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -16,13 +16,21 @@
  */
 package com.workday.prometheus
 
-import scala.annotation.tailrec
+import java.util.regex.Pattern
 
-import io.prometheus.client.Collector
+import scala.annotation.tailrec
 
 package object akka {
   def metricFriendlyActorName(actorPath: String) = {
-    Collector.sanitizeMetricName(trimLeadingSlashes(actorPath).toLowerCase.replace("/", "_"))
+    sanitizeMetricName(trimLeadingSlashes(actorPath).toLowerCase.replace("/", "_"))
+  }
+
+  private val SANITIZE_PREFIX_PATTERN = Pattern.compile("^[^a-zA-Z_]")
+  private val SANITIZE_BODY_PATTERN = Pattern.compile("[^a-zA-Z0-9_]")
+
+  // borrowed from io.prometheus.client.Collector
+  def sanitizeMetricName(metricName: String): String = {
+    SANITIZE_BODY_PATTERN.matcher(SANITIZE_PREFIX_PATTERN.matcher(metricName).replaceFirst("_")).replaceAll("_")
   }
 
   @tailrec

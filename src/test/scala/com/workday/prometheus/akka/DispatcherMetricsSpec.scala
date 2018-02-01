@@ -1,6 +1,6 @@
 /*
  * =========================================================================================
- * Copyright © 2017 Workday, Inc.
+ * Copyright © 2017,2018 Workday, Inc.
  * Copyright © 2013-2017 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -17,18 +17,27 @@
 package com.workday.prometheus.akka
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.collection.JavaConverters._
+
+import com.workday.prometheus.akka.ThreadPoolMetrics.DispatcherName
 
 import akka.actor._
 import akka.dispatch.MessageDispatcher
 import akka.testkit.TestProbe
+import io.micrometer.core.instrument.{ImmutableTag, Tag}
+
+object DispatcherMetricsSpec {
+  def findDispatcherRecorder(dispatcherName: String): Map[String, Double] = {
+    val tags = Seq(new ImmutableTag(DispatcherName, dispatcherName))
+    AkkaMetricRegistry.metricsForTags(tags)
+  }
+}
 
 class DispatcherMetricsSpec extends TestKitBaseSpec("DispatcherMetricsSpec") {
 
-  sealed trait PoolType
-  case object ForkJoinPoolType extends PoolType
-  case object ThreadPoolType extends PoolType
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    AkkaMetricRegistry.clear()
+  }
 
   "the akka dispatcher metrics" should {
     "respect the configured include and exclude filters" in {
@@ -37,26 +46,12 @@ class DispatcherMetricsSpec extends TestKitBaseSpec("DispatcherMetricsSpec") {
       val tpeDispatcher = forceInit(system.dispatchers.lookup("tracked-tpe"))
       val excludedDispatcher = forceInit(system.dispatchers.lookup("explicitly-excluded"))
 
-      findDispatcherRecorder(defaultDispatcher.id, ForkJoinPoolType) shouldNot be(empty)
-      findDispatcherRecorder(fjpDispatcher.id, ForkJoinPoolType) shouldNot be(empty)
-      findDispatcherRecorder(tpeDispatcher.id, ThreadPoolType) shouldNot be(empty)
-      findDispatcherRecorder(excludedDispatcher.id, ForkJoinPoolType) should be(empty)
+      import DispatcherMetricsSpec.findDispatcherRecorder
+      findDispatcherRecorder(defaultDispatcher.id) shouldNot be(empty)
+      findDispatcherRecorder(fjpDispatcher.id) shouldNot be(empty)
+      findDispatcherRecorder(tpeDispatcher.id) shouldNot be(empty)
+      findDispatcherRecorder(excludedDispatcher.id) should be(empty)
     }
-  }
-
-  def findDispatcherRecorder(dispatcherName: String, poolType: PoolType): Map[String, Double] = {
-    val metrics = poolType match {
-      case ForkJoinPoolType => ForkJoinPoolMetrics.collect().asScala.toList
-      case ThreadPoolType => ThreadPoolMetrics.collect().asScala.toList
-    }
-    val values = for(samples <- metrics;
-      sample <- samples.samples.asScala if findUsingSuffix(sample.labelValues.asScala, dispatcherName))
-      yield (sample.name, sample.value)
-    values.toMap
-  }
-
-  def findUsingSuffix(list: Seq[String], suffix: String): Boolean = {
-    list.find(v => v.endsWith(suffix)).isDefined
   }
 
   def forceInit(dispatcher: MessageDispatcher): MessageDispatcher = {
