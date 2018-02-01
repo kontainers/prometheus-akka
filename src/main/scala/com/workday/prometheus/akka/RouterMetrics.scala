@@ -16,21 +16,20 @@
  */
 package com.workday.prometheus.akka
 
-import scala.collection.JavaConverters._
-
-import io.prometheus.client.{Counter, Gauge}
+import scala.collection.concurrent.TrieMap
 
 object RouterMetrics {
-  private val map = new java.util.concurrent.ConcurrentHashMap[Entity, RouterMetrics]().asScala
+  private val map = new TrieMap[Entity, RouterMetrics]()
   def metricsFor(e: Entity) = map.getOrElseUpdate(e, new RouterMetrics(e))
   def hasMetricsFor(e: Entity) = map.contains(e)
 }
 
 class RouterMetrics(entity: Entity) {
+  import AkkaMetricRegistry._
   val actorName = metricFriendlyActorName(entity.name)
-  val routingTime = Gauge.build().name(s"akka_router_routing_time_$actorName").help("Akka Router routing time (Seconds)").register()
-  val processingTime = Gauge.build().name(s"akka_router_processing_time_$actorName").help("Akka Router processing time (Seconds)").register()
-  val timeInMailbox = Gauge.build().name(s"akka_router_time_in_mailbox_$actorName").help("Akka Router time in mailbox (Seconds)").register()
-  val messages = Counter.build().name(s"akka_router_message_count_$actorName").help("Akka Router messages").register()
-  val errors = Counter.build().name(s"akka_router_error_count_$actorName").help("Akka Router errors").register()
+  val routingTime = timer(s"akka_router_routing_time_$actorName", Seq.empty)
+  val processingTime = timer(s"akka_router_processing_time_$actorName", Seq.empty)
+  val timeInMailbox = timer(s"akka_router_time_in_mailbox_$actorName", Seq.empty)
+  val messages = counter(s"akka_router_message_count_$actorName", Seq.empty)
+  val errors = counter(s"akka_router_error_count_$actorName", Seq.empty)
 }

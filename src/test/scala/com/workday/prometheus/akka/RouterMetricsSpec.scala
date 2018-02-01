@@ -37,7 +37,7 @@ class RouterMetricsSpec extends TestKitBaseSpec("RouterMetricsSpec") {
 
       val metrics = routerMetricsRecorderOf(trackedRouter).get
       metrics.actorName shouldEqual "routermetricsspec_user_tracked_pool_router"
-      metrics.messages.get shouldEqual 1.0
+      metrics.messages.count() shouldEqual 1.0
     }
   }
 

@@ -136,7 +136,7 @@ object ActorMonitors {
     }
 
     override def captureEnvelopeContext(): EnvelopeContext = {
-      routerMetrics.messages.inc()
+      routerMetrics.messages.increment()
       super.captureEnvelopeContext()
     }
 
@@ -153,13 +153,13 @@ object ActorMonitors {
       } finally {
         processingTimer.close()
         actorGroupProcessingTimers.foreach { _.close() }
-        routerMetrics.timeInMailbox.inc(timeInMailbox / Collector.NANOSECONDS_PER_SECOND)
+        routerMetrics.timeInMailbox.timer.record(timeInMailbox, TimeUnit.NANOSECONDS)
         recordGroupMetrics(timeInMailbox)
       }
     }
 
     override def processFailure(failure: Throwable): Unit = {
-      routerMetrics.errors.inc()
+      routerMetrics.errors.increment()
       super.processFailure(failure)
     }
   }
