@@ -36,7 +36,7 @@ class ActorMetricsSpec extends TestKitBaseSpec("ActorMetricsSpec") {
 
       val metrics = actorMetricsRecorderOf(trackedActor).get
       metrics.actorName shouldEqual "actormetricsspec_user_tracked_actor"
-      metrics.messages.get shouldEqual 1.0
+      metrics.messages.count() shouldEqual 1.0
     }
   }
 

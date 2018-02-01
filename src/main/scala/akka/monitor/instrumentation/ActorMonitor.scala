@@ -25,7 +25,6 @@ import com.workday.prometheus.akka._
 
 import akka.actor.{ActorRef, ActorSystem, Cell}
 import akka.monitor.instrumentation.ActorMonitors.{TrackedActor, TrackedRoutee}
-import io.prometheus.client.Collector
 
 trait ActorMonitor {
   def captureEnvelopeContext(): EnvelopeContext
@@ -89,8 +88,8 @@ object ActorMonitors {
 
     override def captureEnvelopeContext(): EnvelopeContext = {
       actorMetrics.foreach { am =>
-        am.mailboxSize.inc()
-        am.messages.inc()
+        am.mailboxSize.increment()
+        am.messages.increment()
       }
       super.captureEnvelopeContext()
     }
@@ -112,8 +111,8 @@ object ActorMonitors {
         actorGroupProcessingTimers.foreach { _.close() }
 
         actorMetrics.foreach { am =>
-          am.timeInMailbox.inc(timeInMailbox / Collector.NANOSECONDS_PER_SECOND)
-          am.mailboxSize.dec()
+          am.timeInMailbox.timer.record(timeInMailbox, TimeUnit.NANOSECONDS)
+          am.mailboxSize.decrement()
         }
         recordGroupMetrics(timeInMailbox)
       }
@@ -121,7 +120,7 @@ object ActorMonitors {
 
     override def processFailure(failure: Throwable): Unit = {
       actorMetrics.foreach { am =>
-        am.errors.inc()
+        am.errors.increment()
       }
       super.processFailure(failure)
     }
