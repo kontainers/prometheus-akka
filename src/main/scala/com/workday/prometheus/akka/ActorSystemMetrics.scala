@@ -28,7 +28,7 @@ object ActorSystemMetrics {
 
   import AkkaMetricRegistry._
 
-  def actorCount(system: String) = counter(ActorCountMetricName, tagSeq(system))
+  def actorCount(system: String) = gauge(ActorCountMetricName, tagSeq(system))
   def deadLetterCount(system: String) = counter(DeadLetterCountMetricName, tagSeq(system))
   def unhandledMessageCount(system: String) = counter(UnhandledMessageCountMetricName, tagSeq(system))
   private def tagSeq(system: String): Iterable[Tag] = Seq(new ImmutableTag(ActorSystem, system))

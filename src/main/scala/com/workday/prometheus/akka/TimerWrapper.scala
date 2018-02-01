@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import io.micrometer.core.instrument.Timer
 
-case class ScalaTimer(timer: Timer) {
+case class TimerWrapper(timer: Timer) {
 
   class TimeObservation(timer: Timer, startTime: Long) extends Closeable {
     def close(): Unit = timer.record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS)

@@ -31,11 +31,11 @@ object ActorGroupMetrics {
 
   import AkkaMetricRegistry._
 
-  def mailboxSize(group: String) = counter(MailboxMetricName, tagSeq(group))
+  def mailboxSize(group: String) = gauge(MailboxMetricName, tagSeq(group))
   def processingTime(group: String) = timer(ProcessingTimeMetricName, tagSeq(group))
   def timeInMailbox(group: String) = timer(TimeInMailboxMetricName, tagSeq(group))
   def messages(group: String) = counter(MessageCountMetricName, tagSeq(group))
-  def actorCount(group: String) = counter(ActorCountMetricName, tagSeq(group))
+  def actorCount(group: String) = gauge(ActorCountMetricName, tagSeq(group))
   def errors(group: String) = counter(ErrorCountMetricName, tagSeq(group))
   private def tagSeq(group: String): Iterable[Tag] = Seq(new ImmutableTag(GroupName, group))
 }

@@ -16,7 +16,6 @@
  */
 package com.workday.prometheus.akka
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 import org.scalatest.BeforeAndAfterEach
@@ -25,8 +24,7 @@ import org.scalatest.concurrent.Eventually
 import akka.actor._
 import akka.routing.RoundRobinPool
 import akka.testkit.TestProbe
-import io.micrometer.core.instrument.{ImmutableTag, Tag}
-import io.prometheus.client.Collector
+import io.micrometer.core.instrument.ImmutableTag
 
 class ActorGroupMetricsSpec extends TestKitBaseSpec("ActorGroupMetricsSpec") with BeforeAndAfterEach with Eventually {
 
@@ -96,9 +94,7 @@ class ActorGroupMetricsSpec extends TestKitBaseSpec("ActorGroupMetricsSpec") wit
   }
 
   def findGroupRecorder(groupName: String): Map[String, Double] = {
-    val metrics = AkkaMetricRegistry.metricsForTags(Seq(new ImmutableTag(ActorGroupMetrics.GroupName, groupName)))
-    println(">>>>>> " + metrics)
-    Map.empty
+    AkkaMetricRegistry.metricsForTags(Seq(new ImmutableTag(ActorGroupMetrics.GroupName, groupName)))
   }
 
   def clearGroupMetrics: Unit = {

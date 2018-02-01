@@ -16,7 +16,6 @@
  */
 package com.workday.prometheus.akka
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 import org.scalatest.BeforeAndAfterEach
@@ -25,8 +24,7 @@ import org.scalatest.concurrent.Eventually
 import com.workday.prometheus.akka.ActorSystemMetrics._
 
 import akka.actor._
-import io.micrometer.core.instrument.{ImmutableTag, Tag}
-import io.prometheus.client.Collector
+import io.micrometer.core.instrument.ImmutableTag
 
 class ActorSystemMetricsSpec extends TestKitBaseSpec("ActorSystemMetricsSpec") with BeforeAndAfterEach with Eventually {
 
@@ -69,9 +67,7 @@ class ActorSystemMetricsSpec extends TestKitBaseSpec("ActorSystemMetricsSpec") w
   }
 
   def findSystemMetricsRecorder(name: String): Map[String, Double] = {
-    val metrics = AkkaMetricRegistry.metricsForTags(Seq(new ImmutableTag(ActorSystemMetrics.ActorSystem, name)))
-    println(">>>>>> " + metrics)
-    Map.empty
+    AkkaMetricRegistry.metricsForTags(Seq(new ImmutableTag(ActorSystemMetrics.ActorSystem, name)))
   }
 
   def clearSystemMetrics: Unit = {

@@ -184,7 +184,7 @@ object ActorMonitors {
     protected def recordGroupMetrics(timeInMailbox: Long): Unit = {
       trackingGroups.foreach { group =>
         ActorGroupMetrics.timeInMailbox(group).timer.record(timeInMailbox, TimeUnit.NANOSECONDS)
-        ActorGroupMetrics.mailboxSize(group).increment(-1.0)
+        ActorGroupMetrics.mailboxSize(group).decrement()
       }
     }
 
@@ -196,9 +196,9 @@ object ActorMonitors {
 
     def cleanup(): Unit = {
       if (actorCellCreation) {
-        ActorSystemMetrics.actorCount(actorSystemName).increment(-1.0)
+        ActorSystemMetrics.actorCount(actorSystemName).decrement()
         trackingGroups.foreach { group =>
-          ActorGroupMetrics.actorCount(group).increment(-1.0)
+          ActorGroupMetrics.actorCount(group).decrement()
         }
       }
     }

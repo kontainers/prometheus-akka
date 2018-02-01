@@ -11,6 +11,7 @@ object AkkaMetricRegistry {
   private var registry: Option[MeterRegistry] = None
   private case class MeterKey(name: String, tags: Iterable[Tag])
   private var counterRegistryMap = TrieMap[MeterRegistry, TrieMap[MeterKey, Counter]]()
+  private var gaugeRegistryMap = TrieMap[MeterRegistry, TrieMap[MeterKey, GaugeWrapper]]()
   private var timerRegistryMap = TrieMap[MeterRegistry, TrieMap[MeterKey, Timer]]()
 
   def getRegistry: MeterRegistry = registry.getOrElse(simpleRegistry)
@@ -24,29 +25,41 @@ object AkkaMetricRegistry {
     counterMap.getOrElseUpdate(MeterKey(name, tags), getRegistry.counter(name, javaTags))
   }
 
-  def timer(name: String, tags: Iterable[Tag]): ScalaTimer = {
+  def gauge(name: String, tags: Iterable[Tag]): GaugeWrapper = {
+    gaugeMap.getOrElseUpdate(MeterKey(name, tags), GaugeWrapper(getRegistry, name, tags))
+  }
+
+  def timer(name: String, tags: Iterable[Tag]): TimerWrapper = {
     def javaTags = tags.asJava
-    ScalaTimer(timerMap.getOrElseUpdate(MeterKey(name, tags), getRegistry.timer(name, javaTags)))
+    TimerWrapper(timerMap.getOrElseUpdate(MeterKey(name, tags), getRegistry.timer(name, javaTags)))
   }
 
   private[akka] def clear(): Unit = {
     timerRegistryMap.clear()
+    gaugeRegistryMap.clear()
     counterRegistryMap.clear()
   }
 
-  private[akka] def metricsForTags(tags: Seq[Tag]): Iterable[(String, Option[Measurement])] = {
-    getRegistry.getMeters.asScala.flatMap { meter =>
+  private[akka] def metricsForTags(tags: Seq[Tag]): Map[String, Double] = {
+    val filtered: Iterable[(String, Double)] = getRegistry.getMeters.asScala.flatMap { meter =>
       val id = meter.getId
       if (id.getTags.asScala == tags) {
-        Some((id.getName, meter.measure().asScala.headOption))
+        meter.measure().asScala.headOption.map { measure =>
+          (id.getName, measure.getValue)
+        }
       } else {
         None
       }
     }
+    filtered.toMap
   }
 
   private def counterMap: TrieMap[MeterKey, Counter] = {
     counterRegistryMap.getOrElseUpdate(getRegistry, { TrieMap[MeterKey, Counter]() })
+  }
+
+  private def gaugeMap: TrieMap[MeterKey, GaugeWrapper] = {
+    gaugeRegistryMap.getOrElseUpdate(getRegistry, { TrieMap[MeterKey, GaugeWrapper]() })
   }
 
   private def timerMap: TrieMap[MeterKey, Timer] = {
