@@ -1,6 +1,6 @@
 /*
  * =========================================================================================
- * Copyright © 2017 Workday, Inc.
+ * Copyright © 2017, 2018 Workday, Inc.
  * Copyright © 2013-2017 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -17,16 +17,17 @@
 package com.workday.prometheus.akka
 
 import java.util.Collections
-import java.util.concurrent.{ ConcurrentHashMap, ThreadPoolExecutor }
+import java.util.concurrent.ThreadPoolExecutor
 
-import scala.collection.JavaConverters.{ mapAsScalaConcurrentMapConverter, seqAsJavaListConverter }
+import scala.collection.JavaConverters.seqAsJavaListConverter
+import scala.collection.concurrent.TrieMap
 
 import io.prometheus.client.Collector
 import io.prometheus.client.Collector.MetricFamilySamples
 import io.prometheus.client.GaugeMetricFamily
 
 object ThreadPoolMetrics extends Collector {
-  val map = new ConcurrentHashMap[String, Option[ThreadPoolExecutor]].asScala
+  val map = TrieMap[String, Option[ThreadPoolExecutor]]()
   this.register()
   override def collect(): java.util.List[MetricFamilySamples] = {
     val dispatcherNameList = List("dispatcherName").asJava
