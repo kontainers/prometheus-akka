@@ -57,9 +57,10 @@ object AkkaMetricRegistry {
   }
 
   private[akka] def metricsForTags(tags: Seq[Tag]): Map[String, Double] = {
+    val tagsList = tags.toList
     val filtered: Iterable[(String, Double)] = getRegistry.getMeters.asScala.flatMap { meter =>
       val id = meter.getId
-      if (id.getTags.asScala == tags) {
+      if (id.getTags.asScala.toList == tagsList) {
         meter.measure().asScala.headOption.map { measure =>
           (id.getName, measure.getValue)
         }
