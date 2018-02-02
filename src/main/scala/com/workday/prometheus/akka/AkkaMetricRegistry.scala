@@ -46,8 +46,10 @@ object AkkaMetricRegistry {
   }
 
   def timer(name: String, tags: Iterable[Tag]): TimerWrapper = {
-    def javaTags = tags.asJava
-    TimerWrapper(timerMap.getOrElseUpdate(MeterKey(name, tags), getRegistry.timer(name, javaTags)))
+    def createTimer = {
+      Timer.builder(name).tags(tags.asJava).publishPercentileHistogram().register(getRegistry)
+    }
+    TimerWrapper(timerMap.getOrElseUpdate(MeterKey(name, tags), createTimer))
   }
 
   private[akka] def clear(): Unit = {

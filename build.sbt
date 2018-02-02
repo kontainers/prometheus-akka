@@ -6,6 +6,8 @@ scalaVersion := "2.11.12"
 
 crossScalaVersions := Seq("2.11.12", "2.12.4")
 
+scalacOptions += "-target:jvm-1.8"
+
 def sysPropOrDefault(propName: String, default: String): String = Option(System.getProperty(propName)) match {
   case Some(propVal) if !propVal.trim.isEmpty => propVal.trim
   case _ => default
