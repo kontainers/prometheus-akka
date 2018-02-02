@@ -47,7 +47,11 @@ object AkkaMetricRegistry {
 
   def timer(name: String, tags: Iterable[Tag]): TimerWrapper = {
     def createTimer = {
-      Timer.builder(name).tags(tags.asJava).publishPercentileHistogram().register(getRegistry)
+      val builder = Timer.builder(name).tags(tags.asJava)
+      if (MetricsConfig.histogramBucketsEnabled) {
+        builder.publishPercentileHistogram()
+      }
+      builder.register(getRegistry)
     }
     TimerWrapper(timerMap.getOrElseUpdate(MeterKey(name, tags), createTimer))
   }
