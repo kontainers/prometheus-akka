@@ -16,6 +16,9 @@
  */
 package com.workday.prometheus.akka
 
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.DurationInt
+
 import akka.actor._
 import akka.monitor.instrumentation.CellInfo
 import akka.routing._
@@ -39,13 +42,25 @@ class RouterMetricsSpec extends TestKitBaseSpec("RouterMetricsSpec") {
       metrics.actorName shouldEqual "routermetricsspec_user_tracked_pool_router"
       metrics.messages.count() shouldEqual 1.0
     }
+
+    "handle concurrent metric getOrElseUpdate calls" in {
+      implicit val ec = system.dispatcher
+      val e = Entity("fake-actor-name", MetricsConfig.Actor)
+      val futures = (1 to 100).map{ _ => Future(ActorMetrics.metricsFor(e)) }
+      val future = Future.sequence(futures)
+      val metrics = Await.result(future, 10.seconds)
+      metrics.fold(metrics.head) { (compare, metric) =>
+        metric shouldEqual compare
+        compare
+      }
+    }
   }
 
   def routerMetricsRecorderOf(ref: ActorRef): Option[RouterMetrics] = {
     val name = CellInfo.cellName(system, ref)
     val entity = Entity(name, MetricsConfig.Router)
     if (RouterMetrics.hasMetricsFor(entity)) {
-      Some(RouterMetrics.metricsFor(entity))
+      RouterMetrics.metricsFor(entity)
     } else {
       None
     }

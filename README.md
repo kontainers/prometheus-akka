@@ -16,7 +16,7 @@ Other Differences from Kamon-Akka:
 - records time in seconds as opposed to nanoseconds (the data is still a double) - since 0.8.0
 
 ```sbt
-"com.workday" %% "prometheus-akka" % "0.8.4"
+"com.workday" %% "prometheus-akka" % "0.8.5"
 ```
 
 There is a sample project at https://github.com/pjfanning/prometheus-akka-sample

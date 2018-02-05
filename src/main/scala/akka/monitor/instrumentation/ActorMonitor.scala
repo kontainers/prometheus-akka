@@ -50,7 +50,7 @@ object ActorMonitor {
 
   def createRegularActorMonitor(cellInfo: CellInfo): ActorMonitor = {
     if (cellInfo.isTracked || cellInfo.trackingGroups.length > 0) {
-      val actorMetrics = if (cellInfo.isTracked) Some(ActorMetrics.metricsFor(cellInfo.entity)) else None
+      val actorMetrics = if (cellInfo.isTracked) ActorMetrics.metricsFor(cellInfo.entity) else None
       new TrackedActor(cellInfo.entity, cellInfo.actorSystemName, actorMetrics, cellInfo.trackingGroups, cellInfo.actorCellCreation)
     } else {
       ActorMonitors.ContextPropagationOnly
@@ -58,8 +58,11 @@ object ActorMonitor {
   }
 
   def createRouteeMonitor(cellInfo: CellInfo): ActorMonitor = {
-    def routerMetrics = RouterMetrics.metricsFor(cellInfo.entity)
-    new TrackedRoutee(cellInfo.entity, cellInfo.actorSystemName, routerMetrics, cellInfo.trackingGroups, cellInfo.actorCellCreation)
+    RouterMetrics.metricsFor(cellInfo.entity) match {
+      case Some(rm) =>
+        new TrackedRoutee(cellInfo.entity, cellInfo.actorSystemName, rm, cellInfo.trackingGroups, cellInfo.actorCellCreation)
+      case _ => ActorMonitors.ContextPropagationOnly
+    }
   }
 }
 

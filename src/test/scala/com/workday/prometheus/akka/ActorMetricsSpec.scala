@@ -16,6 +16,9 @@
  */
 package com.workday.prometheus.akka
 
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.DurationInt
+
 import akka.actor._
 import akka.monitor.instrumentation.CellInfo
 import akka.testkit.TestProbe
@@ -38,13 +41,25 @@ class ActorMetricsSpec extends TestKitBaseSpec("ActorMetricsSpec") {
       metrics.actorName shouldEqual "actormetricsspec_user_tracked_actor"
       metrics.messages.count() shouldEqual 1.0
     }
+
+    "handle concurrent metric getOrElseUpdate calls" in {
+      implicit val ec = system.dispatcher
+      val e = Entity("fake-actor-name", MetricsConfig.Actor)
+      val futures = (1 to 100).map{ _ => Future(ActorMetrics.metricsFor(e)) }
+      val future = Future.sequence(futures)
+      val metrics = Await.result(future, 10.seconds)
+      metrics.fold(metrics.head) { (compare, metric) =>
+        metric shouldEqual compare
+        compare
+      }
+    }
   }
 
   def actorMetricsRecorderOf(ref: ActorRef): Option[ActorMetrics] = {
     val name = CellInfo.cellName(system, ref)
     val entity = Entity(name, MetricsConfig.Actor)
     if (ActorMetrics.hasMetricsFor(entity)) {
-      Some(ActorMetrics.metricsFor(entity))
+      ActorMetrics.metricsFor(entity)
     } else {
       None
     }

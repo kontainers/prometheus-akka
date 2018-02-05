@@ -17,11 +17,24 @@
 package com.workday.prometheus.akka
 
 import scala.collection.concurrent.TrieMap
+import scala.util.control.NonFatal
+
+import org.slf4j.LoggerFactory
 
 object ActorMetrics {
+  private val logger = LoggerFactory.getLogger(ActorMetrics.getClass)
   private val map = TrieMap[Entity, ActorMetrics]()
-  def metricsFor(e: Entity) = map.getOrElseUpdate(e, new ActorMetrics(e))
-  def hasMetricsFor(e: Entity) = map.contains(e)
+  def metricsFor(e: Entity): Option[ActorMetrics] = {
+    try {
+      Some(map.getOrElseUpdate(e, new ActorMetrics(e)))
+    } catch {
+      case NonFatal(t) => {
+        logger.warn("Issue with getOrElseUpdate (failing over to simple get)", t)
+        map.get(e)
+      }
+    }
+  }
+  def hasMetricsFor(e: Entity): Boolean = map.contains(e)
 }
 
 class ActorMetrics(entity: Entity) {

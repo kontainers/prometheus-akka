@@ -35,11 +35,15 @@ object RouterMonitor {
 
   def createRouterInstrumentation(cell: Cell): RouterMonitor = {
     val cellInfo = CellInfo.cellInfoFor(cell, cell.system, cell.self, cell.parent, false)
-    def routerMetrics = RouterMetrics.metricsFor(cellInfo.entity)
-
-    if (cellInfo.isTracked)
-      new MetricsOnlyRouterMonitor(cellInfo.entity, routerMetrics)
-    else NoOpRouterMonitor
+    if (cellInfo.isTracked) {
+      RouterMetrics.metricsFor(cellInfo.entity) match {
+        case Some(rm) => new MetricsOnlyRouterMonitor(cellInfo.entity, rm)
+        case _ => NoOpRouterMonitor
+      }
+    }
+    else {
+      NoOpRouterMonitor
+    }
   }
 }
 
