@@ -40,7 +40,7 @@ class GlobPathFilterSpec extends WordSpecLike with Matchers {
       filter.accept("/user/something/otherActor") shouldBe false
     }
 
-    "match all expressions in the same levelss" in {
+    "match all expressions" in {
       val filter = new GlobPathFilter("**")
 
       filter.accept("GET: /ping") shouldBe true

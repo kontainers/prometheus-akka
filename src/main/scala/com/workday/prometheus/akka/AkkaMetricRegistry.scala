@@ -74,7 +74,9 @@ object AkkaMetricRegistry {
         None
       }
     }
-    filtered.toMap
+    filtered.groupBy(_._1).map { case (key, list) =>
+      (key, list.map(_._2).sum)
+    }
   }
 
   private def counterMap: TrieMap[MeterKey, Counter] = {

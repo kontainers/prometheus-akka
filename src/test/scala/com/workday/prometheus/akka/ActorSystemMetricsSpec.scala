@@ -23,28 +23,25 @@ import org.scalatest.concurrent.Eventually
 
 import com.workday.prometheus.akka.ActorSystemMetrics._
 
-import akka.actor._
+import akka.actor.Props
 import io.micrometer.core.instrument.ImmutableTag
 
 class ActorSystemMetricsSpec extends TestKitBaseSpec("ActorSystemMetricsSpec") with BeforeAndAfterEach with Eventually {
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    clearSystemMetrics
-  }
-
   "the actor system metrics" should {
     "count actors" in {
+      val originalMetrics = findSystemMetricsRecorder(system.name)
+      val originalCount = originalMetrics.getOrElse(ActorCountMetricName, 0.0)
       val trackedActor = system.actorOf(Props[ActorMetricsTestActor])
       eventually(timeout(5 seconds)) {
-        findSystemMetricsRecorder(system.name) should not be empty
         val map = findSystemMetricsRecorder(system.name)
-        map.getOrElse(ActorCountMetricName, -1.0) shouldEqual 1.0
+        map should not be empty
+        map.getOrElse(ActorCountMetricName, -1.0) shouldEqual (originalCount + 1.0)
       }
       system.stop(trackedActor)
       eventually(timeout(5 seconds)) {
         val metrics = findSystemMetricsRecorder(system.name)
-        metrics.getOrElse(ActorCountMetricName, -1.0) shouldEqual 0.0
+        metrics.getOrElse(ActorCountMetricName, -1.0) shouldEqual originalCount
       }
     }
     "count unhandled messages" in {
@@ -68,9 +65,5 @@ class ActorSystemMetricsSpec extends TestKitBaseSpec("ActorSystemMetricsSpec") w
 
   def findSystemMetricsRecorder(name: String): Map[String, Double] = {
     AkkaMetricRegistry.metricsForTags(Seq(new ImmutableTag(ActorSystemMetrics.ActorSystem, name)))
-  }
-
-  def clearSystemMetrics: Unit = {
-    AkkaMetricRegistry.clear()
   }
 }
