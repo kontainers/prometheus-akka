@@ -57,7 +57,8 @@ object ActorMonitor {
     RouterMetrics.metricsFor(cellInfo.entity) match {
       case Some(rm) =>
         new TrackedRoutee(cellInfo.entity, cellInfo.actorSystemName, rm, cellInfo.trackingGroups, cellInfo.actorCellCreation)
-      case _ => ActorMonitors.ContextPropagationOnly
+      case _ =>
+        new TrackedActor(cellInfo.entity, cellInfo.actorSystemName, None, cellInfo.trackingGroups, cellInfo.actorCellCreation)
     }
   }
 }

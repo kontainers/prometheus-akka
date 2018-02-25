@@ -6,7 +6,7 @@ scala:
   - 2.12.4
 env:
   - AKKA_VERSION=
-  - AKKA_VERSION=2.5.9
+  - AKKA_VERSION=2.5.10
 script:
   - sbt ++$TRAVIS_SCALA_VERSION coverage test coverageReport -Dakka.version=$AKKA_VERSION
 after_success:
