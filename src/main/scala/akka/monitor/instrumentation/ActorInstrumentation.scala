@@ -140,6 +140,7 @@ object ActorCellInstrumentation {
     val queueFieldName = Properties.versionNumberString.split("\\.").take(2).mkString(".") match {
       case _@ "2.11" ⇒ "akka$actor$UnstartedCell$$queue"
       case _@ "2.12" ⇒ "queue"
+      case _@ "2.13" ⇒ "queue"
       case v         ⇒ throw new IllegalStateException(s"Incompatible Scala version: $v")
     }
 

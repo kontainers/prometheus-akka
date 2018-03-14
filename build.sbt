@@ -4,7 +4,7 @@ name := "micrometer-akka"
 
 scalaVersion := "2.12.4"
 
-crossScalaVersions := Seq("2.11.12", "2.12.4")
+crossScalaVersions := Seq("2.11.12", "2.12.4", "2.13.0-M3")
 
 scalacOptions += "-target:jvm-1.8"
 
@@ -13,21 +13,22 @@ def sysPropOrDefault(propName: String, default: String): String = Option(System.
   case _ => default
 }
 
-val akkaVersion = sysPropOrDefault("akka.version", "2.4.20")
+def akkaDefaultVersion(scalaVersion: String) = if (scalaVersion.startsWith("2.13")) "2.5.11" else "2.4.20"
+def akkaVersion(scalaVersion: String) = sysPropOrDefault("akka.version", akkaDefaultVersion(scalaVersion))
 val aspectjweaverVersion = "1.8.13"
-val micrometerVersion = "1.0.1"
+val micrometerVersion = "1.0.2"
 
 checksums in update := Nil
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.25",
-  "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "io.micrometer" % "micrometer-core" % micrometerVersion,
-  "com.typesafe" % "config" % "1.3.1",
+  "com.typesafe.akka" %% "akka-actor" % akkaVersion(scalaVersion.value),
+  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion(scalaVersion.value),
+  "com.typesafe" % "config" % "1.3.3",
   "org.aspectj" % "aspectjweaver" % aspectjweaverVersion,
-  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-  "org.scalatest" %% "scalatest" % "3.0.4" % "test",
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion(scalaVersion.value) % "test",
+  "org.scalatest" %% "scalatest" % "3.0.5-M1" % "test",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
 )
 
