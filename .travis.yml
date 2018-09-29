@@ -4,7 +4,7 @@ jdk:
   - openjdk10
 scala:
   - 2.11.12
-  - 2.12.6
+  - 2.12.7
   - 2.13.0-M3
 env:
   - AKKA_VERSION=
