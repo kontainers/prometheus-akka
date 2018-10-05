@@ -15,8 +15,10 @@ def sysPropOrDefault(propName: String, default: String): String = Option(System.
 
 def akkaDefaultVersion(scalaVersion: String) = if (scalaVersion.startsWith("2.13")) "2.5.17" else "2.4.20"
 def akkaVersion(scalaVersion: String) = sysPropOrDefault("akka.version", akkaDefaultVersion(scalaVersion))
-val aspectjweaverVersion = "1.9.1"
+val aspectjweaverVersion = "1.9.2.RC2" 
 val micrometerVersion = "1.0.6"
+
+resolvers += "Spring Milestone" at "http://repo.spring.io/milestone"
 
 checksums in update := Nil
 
@@ -27,13 +29,13 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion(scalaVersion.value),
   "com.typesafe" % "config" % "1.3.3",
   "org.aspectj" % "aspectjweaver" % aspectjweaverVersion,
-  "com.typesafe.akka" %% "akka-testkit" % akkaVersion(scalaVersion.value) % "test",
-  "org.scalatest" %% "scalatest" % "3.0.5-M1" % "test",
-  "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion(scalaVersion.value) % Test,
+  "org.scalatest" %% "scalatest" % "3.0.5-M1" % Test,
+  "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
 )
 
 enablePlugins(JavaAgent)
-javaAgents += "org.aspectj" % "aspectjweaver" % aspectjweaverVersion % "test"
+javaAgents += "org.aspectj" % "aspectjweaver" % aspectjweaverVersion % Test
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
 
