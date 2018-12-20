@@ -42,7 +42,7 @@ class DispatcherMetricsSpec extends TestKitBaseSpec(DispatcherMetricsSpec.System
 
   "the akka dispatcher metrics" should {
     "respect the configured include and exclude filters" in {
-      val defaultDispatcher = forceInit(system.dispatchers.lookup("akka.actor.default-dispatcher"))
+      forceInit(system.dispatchers.lookup("akka.actor.default-dispatcher"))
       val fjpDispatcher = forceInit(system.dispatchers.lookup("tracked-fjp"))
       val tpeDispatcher = forceInit(system.dispatchers.lookup("tracked-tpe"))
       val excludedDispatcher = forceInit(system.dispatchers.lookup("explicitly-excluded"))

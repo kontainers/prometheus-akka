@@ -28,18 +28,7 @@ class ForkJoinPoolMetricsSpec extends BaseSpec {
       val name = "ForkJoinPoolMetricsSpec-java-pool"
       val pool = new java.util.concurrent.ForkJoinPool
       try {
-        ForkJoinPoolMetrics.add(name, pool.asInstanceOf[ForkJoinPoolLike])
-        DispatcherMetricsSpec.findDispatcherRecorder(name) should not be(empty)
-      } finally {
-        pool.shutdownNow()
-      }
-    }
-
-    "support scala forkjoinpool" in {
-      val name = "ForkJoinPoolMetricsSpec-scala-pool"
-      val pool = new scala.concurrent.forkjoin.ForkJoinPool
-      try {
-        ForkJoinPoolMetrics.add(name, pool.asInstanceOf[ForkJoinPoolLike])
+        ForkJoinPoolMetrics.add(name, pool)
         DispatcherMetricsSpec.findDispatcherRecorder(name) should not be(empty)
       } finally {
         pool.shutdownNow()

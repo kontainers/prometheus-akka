@@ -18,20 +18,15 @@
 package akka.monitor.instrumentation
 
 import java.lang.reflect.Method
-import java.util.concurrent.{ExecutorService, ThreadPoolExecutor}
-
-import scala.util.control.NonFatal
-
-import org.aspectj.lang.ProceedingJoinPoint
-import org.aspectj.lang.annotation.{After, AfterReturning, Around, Aspect, Before, DeclareMixin, Pointcut}
-import org.slf4j.LoggerFactory
-
-import io.kontainers.micrometer.akka.{ForkJoinPoolLike, MetricsConfig}
+import java.util.concurrent.{ExecutorService, ForkJoinPool, ThreadPoolExecutor}
 
 import akka.actor.{ActorContext, ActorSystem, ActorSystemImpl, Props}
 import akka.dispatch.{Dispatcher, Dispatchers, ExecutorServiceDelegate, MessageDispatcher}
 import akka.monitor.instrumentation.LookupDataAware.LookupData
-import io.kontainers.micrometer.akka.{ForkJoinPoolMetrics, ThreadPoolMetrics}
+import io.kontainers.micrometer.akka.{ForkJoinPoolMetrics, MetricsConfig, ThreadPoolMetrics}
+import org.aspectj.lang.ProceedingJoinPoint
+import org.aspectj.lang.annotation._
+import org.slf4j.LoggerFactory
 
 @Aspect
 class DispatcherInstrumentation {
@@ -83,13 +78,9 @@ class DispatcherInstrumentation {
     if (MetricsConfig.shouldTrack(MetricsConfig.Dispatcher, prefixedName)) {
       executorService match {
         case tpe: ThreadPoolExecutor ⇒ ThreadPoolMetrics.add(prefixedName, tpe)
+        case fjp: ForkJoinPool ⇒ ForkJoinPoolMetrics.add(prefixedName, fjp)
         case other => {
-          try {
-            val fjp = other.asInstanceOf[ForkJoinPoolLike]
-            ForkJoinPoolMetrics.add(prefixedName, fjp)
-          } catch {
-            case NonFatal(e) => logger.warn(s"Unhandled Dispatcher Execution Service ${other.getClass.getName}")
-          }
+          logger.warn(s"Unhandled Dispatcher Execution Service ${other.getClass.getName}")
         }
       }
     }
