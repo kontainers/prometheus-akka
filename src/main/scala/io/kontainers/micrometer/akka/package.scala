@@ -37,4 +37,14 @@ package object akka {
   private def trimLeadingSlashes(s: String): String = {
     if (s.startsWith("/")) trimLeadingSlashes(s.substring(1)) else s
   }
+
+  type ForkJoinPoolLike = {
+    def getParallelism: Int
+    def getPoolSize: Int
+    def getActiveThreadCount: Int
+    def getRunningThreadCount: Int
+    def getQueuedSubmissionCount: Int
+    def getQueuedTaskCount: Long
+    def getStealCount: Long
+  }
 }

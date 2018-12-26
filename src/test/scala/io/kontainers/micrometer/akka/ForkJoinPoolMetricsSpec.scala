@@ -16,7 +16,11 @@
  */
 package io.kontainers.micrometer.akka
 
+import org.slf4j.LoggerFactory
+
 class ForkJoinPoolMetricsSpec extends BaseSpec {
+
+  val logger = LoggerFactory.getLogger(classOf[ForkJoinPoolMetricsSpec])
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -28,10 +32,29 @@ class ForkJoinPoolMetricsSpec extends BaseSpec {
       val name = "ForkJoinPoolMetricsSpec-java-pool"
       val pool = new java.util.concurrent.ForkJoinPool
       try {
-        ForkJoinPoolMetrics.add(name, pool)
+        ForkJoinPoolMetrics.add(name, pool.asInstanceOf[ForkJoinPoolLike])
         DispatcherMetricsSpec.findDispatcherRecorder(name) should not be(empty)
       } finally {
         pool.shutdownNow()
+      }
+    }
+
+    "support scala forkjoinpool" in {
+      try {
+        val clazz = Class.forName("scala.concurrent.forkjoin.ForkJoinPool")
+        val name = "ForkJoinPoolMetricsSpec-scala-pool"
+        val pool = clazz.newInstance
+        try {
+          ForkJoinPoolMetrics.add(name, pool.asInstanceOf[ForkJoinPoolLike])
+          DispatcherMetricsSpec.findDispatcherRecorder(name) should not be (empty)
+        } finally {
+          val method = clazz.getMethod("shutdownNow")
+          method.invoke(pool)
+        }
+      } catch {
+        case _: ClassNotFoundException => {
+          logger.warn("skipping scala forkjoinpool test as class no longer supported")
+        }
       }
     }
   }

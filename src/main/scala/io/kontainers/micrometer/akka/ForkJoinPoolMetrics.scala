@@ -16,26 +16,25 @@
  */
 package io.kontainers.micrometer.akka
 
-import java.util.concurrent.ForkJoinPool
-
 import scala.collection.JavaConverters._
+
 import io.kontainers.micrometer.akka.impl.DoubleFunction
 import io.micrometer.core.instrument.{ImmutableTag, Tag}
 
 object ForkJoinPoolMetrics {
   val DispatcherName = "dispatcherName"
 
-  def add(dispatcherName: String, fjp: ForkJoinPool): Unit = {
+  def add(dispatcherName: String, fjp: ForkJoinPoolLike): Unit = {
     import io.kontainers.micrometer.akka.AkkaMetricRegistry._
     val tags: Iterable[Tag] = Seq(new ImmutableTag(DispatcherName, dispatcherName))
     val jtags = tags.asJava
-    val parellelismFn = new DoubleFunction[ForkJoinPool](_.getParallelism)
-    val poolSizeFn = new DoubleFunction[ForkJoinPool](_.getParallelism)
-    val activeThreadCountFn = new DoubleFunction[ForkJoinPool](_.getActiveThreadCount)
-    val runningThreadCountFn = new DoubleFunction[ForkJoinPool](_.getRunningThreadCount)
-    val queuedSubmissionCountFn = new DoubleFunction[ForkJoinPool](_.getQueuedSubmissionCount)
-    val queuedTaskCountFn = new DoubleFunction[ForkJoinPool](_.getQueuedTaskCount)
-    val stealCountFn = new DoubleFunction[ForkJoinPool](_.getStealCount)
+    val parellelismFn = new DoubleFunction[ForkJoinPoolLike](_.getParallelism)
+    val poolSizeFn = new DoubleFunction[ForkJoinPoolLike](_.getParallelism)
+    val activeThreadCountFn = new DoubleFunction[ForkJoinPoolLike](_.getActiveThreadCount)
+    val runningThreadCountFn = new DoubleFunction[ForkJoinPoolLike](_.getRunningThreadCount)
+    val queuedSubmissionCountFn = new DoubleFunction[ForkJoinPoolLike](_.getQueuedSubmissionCount)
+    val queuedTaskCountFn = new DoubleFunction[ForkJoinPoolLike](_.getQueuedTaskCount)
+    val stealCountFn = new DoubleFunction[ForkJoinPoolLike](_.getStealCount)
     getRegistry.gauge("akka_dispatcher_forkjoinpool_parellelism", jtags, fjp, parellelismFn)
     getRegistry.gauge("akka_dispatcher_forkjoinpool_pool_size", jtags, fjp, poolSizeFn)
     getRegistry.gauge("akka_dispatcher_forkjoinpool_active_thread_count", jtags, fjp, activeThreadCountFn)
