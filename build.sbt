@@ -16,7 +16,7 @@ def sysPropOrDefault(propName: String, default: String): String = Option(System.
 def akkaDefaultVersion(scalaVersion: String) = if (scalaVersion.startsWith("2.13")) "2.5.23" else "2.4.20"
 def akkaVersion(scalaVersion: String) = sysPropOrDefault("akka.version", akkaDefaultVersion(scalaVersion))
 val aspectjweaverVersion = "1.9.4"
-val micrometerVersion = "1.1.4"
+val micrometerVersion = "1.1.5"
 
 resolvers += "Spring Milestone" at "http://repo.spring.io/milestone"
 
