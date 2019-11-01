@@ -18,12 +18,14 @@
 package akka.monitor.instrumentation
 
 import java.lang.reflect.Method
-import java.util.concurrent.{ExecutorService, ThreadPoolExecutor}
+import java.util.concurrent.{ExecutorService, ForkJoinPool, ThreadPoolExecutor}
 
 import akka.actor.{ActorContext, ActorSystem, ActorSystemImpl, Props}
 import akka.dispatch.{Dispatcher, Dispatchers, ExecutorServiceDelegate, MessageDispatcher}
 import akka.monitor.instrumentation.LookupDataAware.LookupData
-import io.kontainers.micrometer.akka.{ForkJoinPoolLike, ForkJoinPoolMetrics, MetricsConfig, ThreadPoolMetrics}
+import io.kontainers.micrometer.akka.{AkkaMetricRegistry, ForkJoinPoolLike, ForkJoinPoolMetrics, MetricsConfig, ThreadPoolMetrics}
+import io.micrometer.core.instrument.Tag
+import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation._
 import org.slf4j.LoggerFactory
@@ -79,7 +81,9 @@ class DispatcherInstrumentation {
     }
     if (MetricsConfig.shouldTrack(MetricsConfig.Dispatcher, prefixedName)) {
       executorService match {
-        case tpe: ThreadPoolExecutor => ThreadPoolMetrics.add(prefixedName, tpe)
+        case tpe: ThreadPoolExecutor => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, tpe, prefixedName, Tag.of("type", "ThreadPoolExecutor"))
+        case fjp: ForkJoinPool => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, fjp, prefixedName, Tag.of("type", "ForkJoinPool"))
+        case es: ExecutorService => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, es, prefixedName, Tag.of("type", es.getClass.getName))
         case other => {
           try {
             val fjp = other.asInstanceOf[ForkJoinPoolLike]
