@@ -83,6 +83,8 @@ class DispatcherInstrumentation {
       executorService match {
         case tpe: ThreadPoolExecutor => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, tpe, prefixedName, Tag.of("type", "ThreadPoolExecutor"))
         case fjp: ForkJoinPool => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, fjp, prefixedName, Tag.of("type", "ForkJoinPool"))
+        case afjp: akka.dispatch.forkjoin.ForkJoinPool =>
+          ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, afjp, prefixedName, Tag.of("type", "ForkJoinPool"))
         case es: ExecutorService => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, es, prefixedName, Tag.of("type", es.getClass.getName))
         case other => {
           try {
