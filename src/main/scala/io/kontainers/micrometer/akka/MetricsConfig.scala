@@ -34,6 +34,9 @@ object MetricsConfig {
 
   lazy val matchEvents: Boolean = defaultConfig.getBoolean(s"$BaseConfig.match.events")
   lazy val histogramBucketsEnabled: Boolean = defaultConfig.getBoolean(s"$BaseConfig.histogram.buckets.enabled")
+  lazy val useMicrometerExecutorServiceMetrics: Boolean = {
+    defaultConfig.getString(s"$BaseConfig.executor-service.style") == "core"
+  }
 
   implicit class Syntax(val config: Config) extends AnyVal {
     def firstLevelKeys: Set[String] = {

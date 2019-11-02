@@ -74,25 +74,35 @@ class DispatcherInstrumentation {
   }
 
   private def registerDispatcher(dispatcherName: String, executorService: ExecutorService,
-      system: Option[ActorSystem] = None): Unit = {
+                                 system: Option[ActorSystem]): Unit = {
     val prefixedName = system match {
       case Some(s) => s"${s.name}_${dispatcherName}"
       case None => dispatcherName
     }
+    registerDispatcher(prefixedName, executorService)
+  }
+
+  private def registerDispatcher(prefixedName: String, executorService: ExecutorService): Unit = {
     if (MetricsConfig.shouldTrack(MetricsConfig.Dispatcher, prefixedName)) {
-      executorService match {
-        case tpe: ThreadPoolExecutor => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, tpe, prefixedName, Tag.of("type", "ThreadPoolExecutor"))
-        case fjp: ForkJoinPool => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, fjp, prefixedName, Tag.of("type", "ForkJoinPool"))
-        case fjp: akka.dispatch.ForkJoinExecutorConfigurator.AkkaForkJoinPool =>
-          ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, fjp, prefixedName, Tag.of("type", "ForkJoinPool"))
-        case es: ExecutorService =>
-          ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, es, prefixedName, Tag.of("type", es.getClass.getName))
-        case other => {
-          try {
-            val fjp = other.asInstanceOf[ForkJoinPoolLike]
-            ForkJoinPoolMetrics.add(prefixedName, fjp)
-          } catch {
-            case NonFatal(e) => logger.warn(s"Unhandled Dispatcher Execution Service ${other.getClass.getName}")
+      if (MetricsConfig.useMicrometerExecutorServiceMetrics) {
+        executorService match {
+          case tpe: ThreadPoolExecutor => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, tpe, prefixedName, Tag.of("type", "ThreadPoolExecutor"))
+          case fjp: ForkJoinPool => ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, fjp, prefixedName, Tag.of("type", "ForkJoinPool"))
+          case fjp: akka.dispatch.ForkJoinExecutorConfigurator.AkkaForkJoinPool =>
+            ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, fjp, prefixedName, Tag.of("type", "ForkJoinPool"))
+          case _ =>
+            ExecutorServiceMetrics.monitor(AkkaMetricRegistry.getRegistry, executorService, prefixedName, Tag.of("type", "unknown"))
+        }
+      } else {
+        executorService match {
+          case tpe: ThreadPoolExecutor => ThreadPoolMetrics.add(prefixedName, tpe)
+          case other => {
+            try {
+              val fjp = executorService.asInstanceOf[ForkJoinPoolLike]
+              ForkJoinPoolMetrics.add(prefixedName, fjp)
+            } catch {
+              case NonFatal(e) => logger.warn(s"Unhandled Dispatcher Execution Service ${other.getClass.getName}")
+            }
           }
         }
       }
@@ -125,7 +135,7 @@ class DispatcherInstrumentation {
     // lookupData.actorSystem will be null only during the first lookup of the default dispatcher during the
     // ActorSystemImpl's initialization.
     if (lookupData.actorSystem != null)
-      registerDispatcher(lookupData.dispatcherName, executorService)
+      registerDispatcher(lookupData.dispatcherName, executorService, None)
   }
 
   @Pointcut("initialization(akka.dispatch.Dispatcher.LazyExecutorServiceDelegate.new(..)) && this(lazyExecutor)")
