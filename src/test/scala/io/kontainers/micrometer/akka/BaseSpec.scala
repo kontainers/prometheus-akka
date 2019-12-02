@@ -16,12 +16,14 @@
  */
 package io.kontainers.micrometer.akka
 
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.BeforeAndAfterAll
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-trait BaseSpec extends WordSpecLike with Matchers with BeforeAndAfterAll
+trait BaseSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll
 
 abstract class TestKitBaseSpec(actorSystemName: String) extends TestKit(ActorSystem(actorSystemName)) with BaseSpec {
   override def afterAll(): Unit = {
