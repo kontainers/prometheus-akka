@@ -1,4 +1,4 @@
-addSbtPlugin("com.lightbend.sbt" % "sbt-javaagent" % "0.1.5")
+addSbtPlugin("com.lightbend.sbt" % "sbt-javaagent" % "0.1.6")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.13")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.2")
